@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
+using Tennis;
 using Tennis.Grains.Abstractions;
 
 var hostBuilder = WebApplication.CreateBuilder(args);
@@ -24,7 +25,7 @@ hostBuilder
             options.TableName = "GrainState";
             options.ConfigureTableServiceClient(tableConnString);
         });
-        builder.AddAzureQueueStreams("QueueProvider",
+        builder.AddAzureQueueStreams(Constants.QueueStreamName,
                    configurator =>
                    {
                        configurator.ConfigureAzureQueue(
@@ -58,12 +59,12 @@ app.MapGet("/match/{name}", (string name, IGrainFactory factory) =>
     return matchGrain.GetResult();
 });
 
-app.MapPut("/match/{name}", (string name, [FromBody]StartMatchRequest request, IGrainFactory factory) =>
+app.MapPut("/match/{name}", async (string name, [FromBody]StartMatchRequest request, IGrainFactory factory) =>
 {
+    await factory.GetGrain<IPlayerGrain>(name + "-Player1").Create(name, request.ExperiencePlayer1);
+    await factory.GetGrain<IPlayerGrain>(name + "-Player2").Create(name, request.ExperiencePlayer2);
     var matchGrain = factory.GetGrain<IMatchGrain>(name);
-    return matchGrain.StartMatch(request);
+    await matchGrain.StartMatch(request);
 });
-
-
 
 app.Run();

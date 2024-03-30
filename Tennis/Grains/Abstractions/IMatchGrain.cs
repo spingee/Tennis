@@ -16,3 +16,5 @@ public record MatchResult(bool IsFinished, IReadOnlyList<SetResult> Sets);
 public record SetResult(int Player1Score, int Player2Score);
 
 public record MatchState(StartMatchRequest? Request, MatchResult? Result);
+
+public record PlayerState(string MatchName, int Experience, bool? LastPointWon = null);

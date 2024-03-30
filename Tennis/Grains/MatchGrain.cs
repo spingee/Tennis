@@ -1,8 +1,9 @@
 namespace Tennis.Grains;
 
-using Orleans.Providers;
 using Orleans.Runtime;
+using Orleans.Streams;
 using Tennis.Grains.Abstractions;
+
 
 public class MatchGrain : Grain, IMatchGrain
 {
@@ -10,14 +11,14 @@ public class MatchGrain : Grain, IMatchGrain
     private readonly IPersistentState<MatchState> state;
 
     public MatchGrain(ILogger<MatchGrain> logger,
-        [PersistentState(nameof(MatchGrain), ProviderConstants.DEFAULT_STORAGE_PROVIDER_NAME)]
+        [PersistentState(nameof(MatchGrain))]
         IPersistentState<MatchState> state)
     {
         this.logger = logger;
         this.state = state;
     }
 
-    public Task StartMatch(StartMatchRequest request)
+    public async Task StartMatch(StartMatchRequest request)
     {
         state.State =  new MatchState(request, new MatchResult(false, Array.Empty<SetResult>()));
         logger.LogInformation(
@@ -25,7 +26,13 @@ public class MatchGrain : Grain, IMatchGrain
             this.GetPrimaryKeyString(),
             request.ExperiencePlayer1,
             request.ExperiencePlayer2);
-        return state.WriteStateAsync();
+        var streamProvider = this.GetStreamProvider(Constants.QueueStreamName);
+        var stream = streamProvider.GetStream<int>(StreamId.Create(Constants.PlayerPlayResultStream, this.GetPrimaryKeyString()));
+        await stream.SubscribeAsync(PlayerPlayedHandler);
+        await streamProvider.GetStream<int>(StreamId.Create(Constants.PlayerPlayRequestStream, this.GetPrimaryKeyString() +
+                                "-Player1"))
+            .OnNextAsync(0);
+        await state.WriteStateAsync();
     }
 
     public Task<MatchResult> GetResult()
@@ -42,5 +49,11 @@ public class MatchGrain : Grain, IMatchGrain
     {
         await state.WriteStateAsync();
         await base.OnDeactivateAsync(reason, cancellationToken);
+    }
+
+    private Task PlayerPlayedHandler(int i, StreamSequenceToken token)
+    {
+        logger.LogInformation("Player {Player} played {Number}", this.GetPrimaryKeyString(), i);
+        return Task.CompletedTask;
     }
 }
