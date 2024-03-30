@@ -1,0 +1,27 @@
+﻿services:
+  tennis:
+    image: tennis
+    build:
+      context: .
+      dockerfile: Tennis/Dockerfile
+    environment:
+      - Orleans__AzureTableStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=myaccountname;AccountKey=ZGV2c3RvcmVhY2NvdW50Mw==;TableEndpoint=http://azurite:10002/myaccountname;
+      - Orleans__AzureQueue__ConnectionString=DefaultEndpointsProtocol=http;AccountName=myaccountname;AccountKey=ZGV2c3RvcmVhY2NvdW50Mw==;QueueEndpoint=http://azurite:10001/myaccountname;
+    ports:
+      - "5000:5000"
+    depends_on:
+      azurite:
+        condition: service_healthy
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    environment:
+      - AZURITE_ACCOUNTS=myaccountname:ZGV2c3RvcmVhY2NvdW50Mw==
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    # required, see https://github.com/Azure/Azurite/issues/1666
+    healthcheck:
+      test: nc 127.0.0.1 10000 -z
+      interval: 1s
+      retries: 30
