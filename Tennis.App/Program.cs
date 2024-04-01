@@ -1,7 +1,8 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
-using Tennis;
-using Tennis.Grains.Abstractions;
+using Tennis.App.Contract;
+using Tennis.Core;
+using Tennis.Core.Grains.Abstractions;
 
 var hostBuilder = WebApplication.CreateBuilder(args);
 
@@ -53,10 +54,11 @@ hostBuilder
 
 var app = hostBuilder.Build();
 
-app.MapGet("/match/{name}", (string name, IGrainFactory factory) =>
+app.MapGet("/match/{name}", async (string name, IGrainFactory factory) =>
 {
     var matchGrain = factory.GetGrain<IMatchGrain>(name);
-    return matchGrain.GetResult();
+    var result = await matchGrain.GetResult();
+    return new MatchResult(result.IsFinished, result.ToString());
 });
 
 app.MapPut("/match/{name}", async (string name, [FromBody]StartMatchRequest request, IGrainFactory factory) =>

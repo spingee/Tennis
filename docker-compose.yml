@@ -3,7 +3,7 @@
     image: tennis
     build:
       context: .
-      dockerfile: Tennis/Dockerfile
+      dockerfile: Tennis.App/Dockerfile
     environment:
       - Orleans__AzureTableStorage__ConnectionString=DefaultEndpointsProtocol=http;AccountName=myaccountname;AccountKey=ZGV2c3RvcmVhY2NvdW50Mw==;TableEndpoint=http://azurite:10002/myaccountname;
       - Orleans__AzureQueue__ConnectionString=DefaultEndpointsProtocol=http;AccountName=myaccountname;AccountKey=ZGV2c3RvcmVhY2NvdW50Mw==;QueueEndpoint=http://azurite:10001/myaccountname;

@@ -20,4 +20,8 @@
       <PackageReference Include="Microsoft.Orleans.Streaming.AzureStorage" Version="7.2.6" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Tennis.Core\Tennis.Core.csproj" />
+    </ItemGroup>
+
 </Project>

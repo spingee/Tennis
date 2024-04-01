@@ -3,12 +3,12 @@ services:
   tennis:
     build:
       context: "/Users/janstrnad/repos/Tennis"
-      dockerfile: "Tennis/Dockerfile"
+      dockerfile: "Tennis.App/Dockerfile"
       target: "base"
     command: []
     entrypoint:
     - "dotnet"
-    - "/app/bin/Debug/net7.0/Tennis.dll"
+    - "/app/bin/Debug/net7.0/Tennis.App.dll"
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
       DOTNET_USE_POLLING_FILE_WATCHER: "true"
@@ -16,6 +16,6 @@ services:
     ports: []
     volumes:
     - "/Users/janstrnad/.nuget/packages:/root/.nuget/packages"
-    - "/Users/janstrnad/repos/Tennis/Tennis:/app:rw"
+    - "/Users/janstrnad/repos/Tennis/Tennis.App:/app:rw"
     - "/Users/janstrnad/repos/Tennis:/src:rw"
     working_dir: "/app"

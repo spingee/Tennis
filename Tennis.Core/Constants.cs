@@ -1,4 +1,4 @@
-namespace Tennis;
+namespace Tennis.Core;
 
 public class Constants
 {

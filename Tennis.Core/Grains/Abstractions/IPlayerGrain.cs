@@ -1,4 +1,6 @@
-namespace Tennis.Grains.Abstractions;
+namespace Tennis.Core.Grains.Abstractions;
+
+using Orleans;
 
 public interface IPlayerGrain : IGrainWithStringKey
 {

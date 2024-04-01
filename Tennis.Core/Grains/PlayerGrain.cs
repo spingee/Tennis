@@ -1,20 +1,19 @@
-namespace Tennis.Grains;
+namespace Tennis.Core.Grains;
 
+using System.Collections.Immutable;
 using Orleans.Runtime;
 using Orleans.Streams;
-using Tennis.Grains.Abstractions;
+using Tennis.Core.Grains.Abstractions;
 
 [ImplicitStreamSubscription(Constants.PlayerPlayRequestStream)]
 public class PlayerGrain : Grain, IPlayerGrain
 {
-    private readonly ILogger<PlayerGrain> logger;
     private readonly IPersistentState<PlayerState> state;
 
-    public PlayerGrain(ILogger<PlayerGrain> logger,
+    public PlayerGrain(
         [PersistentState(nameof(PlayerGrain))]
         IPersistentState<PlayerState> state)
     {
-        this.logger = logger;
         this.state = state;
     }
 
@@ -30,16 +29,23 @@ public class PlayerGrain : Grain, IPlayerGrain
 
     private Task PlayHandler(int i, StreamSequenceToken token)
     {
-        logger.LogInformation("Player {Player} played {Number}", this.GetPrimaryKeyString(), i);
         var streamProvider = this.GetStreamProvider(Constants.QueueStreamName);
-        return streamProvider.GetStream<int>(StreamId.Create(Constants.PlayerPlayResultStream,
+        var lastPointResults = state.State.LastPointResults;
+        int next = Random.Shared.Next(state.State.Experience, 100);
+        var result = next > (lastPointResults.TakeLast(5).Count(f => f) > 4 ? 90 : 70);
+
+        state.State = state.State with
+        {
+            LastPointResults = state.State.LastPointResults.Add(result)
+        };
+        return streamProvider.GetStream<PlayerPlayResponse>(StreamId.Create(Constants.PlayerPlayResultStream,
                                  state.State.MatchName))
-                             .OnNextAsync(0);
+                             .OnNextAsync(new PlayerPlayResponse(result, this.GetPrimaryKeyString().Contains("Player1")));
     }
 
     public Task Create(string matchName, int experience)
     {
-        state.State = new PlayerState(matchName, experience);
+        state.State = new PlayerState(matchName, experience, ImmutableList<bool>.Empty);
         return state.WriteStateAsync();
     }
 }
