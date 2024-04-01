@@ -1,6 +1,7 @@
 namespace Tennis.Core.Domain;
 
 using System.Collections.Immutable;
+using Tennis.Core.Grains.Abstractions;
 
 [GenerateSerializer]
 public record Set
@@ -50,6 +51,17 @@ public record Set
         }
 
         return this with { Gems = immutableList.Add(newResult), IsPlayerOnePlayNext = newResult.IsPlayerOneServe};
+    }
+
+    public static Set FromStorage(SetStorage storage)
+    {
+        return new Set
+        {
+            Gems = storage.Gems.Select(Gem.FromStorage).ToImmutableList(),
+            Player1Score = storage.Player1Score,
+            Player2Score = storage.Player2Score,
+            IsPlayerOnePlayNext = storage.IsPlayerOnePlayNext
+        };
     }
 
     public override string ToString()

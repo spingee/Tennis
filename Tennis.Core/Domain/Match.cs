@@ -1,6 +1,7 @@
 namespace Tennis.Core.Domain;
 
 using System.Collections.Immutable;
+using Tennis.Core.Grains.Abstractions;
 
 [GenerateSerializer]
 public record Match(string Name)
@@ -30,6 +31,14 @@ public record Match(string Name)
         }
 
         return this with { Sets = immutableList.Add(newResult) };
+    }
+
+    public static Match FromStorage(MatchStorage storage)
+    {
+        return new Match(storage.Name)
+        {
+            Sets = storage.Sets.Select(Set.FromStorage).ToImmutableList()
+        };
     }
 
     public override string ToString()

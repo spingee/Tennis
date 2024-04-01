@@ -90,6 +90,17 @@ public record GemPoint : IComparable<GemPoint>
         return Comparer<GemPoint>.Default.Compare(left, right) >= 0;
     }
 
+    public static GemPoint FromInt(int value) =>
+        value switch
+        {
+            ScoreZeroInt => Zero,
+            Score15Int => Fifteen,
+            Score30Int => Thirty,
+            Score40Int => Forty,
+            ScoreAdvantageInt => Advance,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
     public override string ToString()
     {
         return Value switch

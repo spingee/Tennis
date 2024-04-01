@@ -1,5 +1,7 @@
 namespace Tennis.Core.Domain;
 
+using Tennis.Core.Grains.Abstractions;
+
 [GenerateSerializer]
 public record Gem
 {
@@ -59,6 +61,17 @@ public record Gem
             Player1Score = isWon
                 ? Player1Score == GemPoint.Advance ? Player1Score.LoseAdvantage() : Player1Score
                 : Player1Score.Next()
+        };
+    }
+
+    public static Gem FromStorage(GemStorage storage)
+    {
+        return new Gem
+        {
+            Player1Score = GemPoint.FromInt(storage.Player1Score),
+            Player2Score = GemPoint.FromInt(storage.Player2Score),
+            IsPlayerOneServe = storage.IsPlayerOneServe,
+            IsFinished = storage.IsFinished
         };
     }
 

@@ -12,6 +12,7 @@ public class MatchGrain : Grain, IMatchGrain
 {
     private readonly ILogger logger;
     private readonly IPersistentState<MatchState> state;
+    private Match match = null!;
 
     public MatchGrain(
         ILoggerFactory loggerFactory,
@@ -23,23 +24,26 @@ public class MatchGrain : Grain, IMatchGrain
 
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
-        logger.LogInformation("MatchGrain activated {Match}", this.state.State.Match);
+        if (state.State.Match != null)
+            match = Match.FromStorage(state.State.Match);
         var streamProvider = this.GetStreamProvider(Constants.QueueStreamName);
         var stream =
             streamProvider.GetStream<PlayerPlayResponse>(
                 StreamId.Create(Constants.PlayerPlayResultStream, this.GetPrimaryKeyString()));
         var subscriptionHandles = await stream.GetAllSubscriptionHandles();
-        if(subscriptionHandles.Count > 0)
+        if (subscriptionHandles.Count > 0)
         {
             await subscriptionHandles[0].ResumeAsync(PlayerPlayedHandler);
         }
         else
             await stream.SubscribeAsync(PlayerPlayedHandler);
+
         await base.OnActivateAsync(cancellationToken);
     }
 
     public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
     {
+        state.State.Match = MatchStorage.FromMatch(match);
         await state.WriteStateAsync();
         await base.OnDeactivateAsync(reason, cancellationToken);
     }
@@ -50,7 +54,9 @@ public class MatchGrain : Grain, IMatchGrain
         {
             throw new InvalidOperationException("Match already exists.");
         }
-        state.State = new MatchState(request, new Match(this.GetPrimaryKeyString()));
+
+        match = new Match(this.GetPrimaryKeyString());
+        state.State.Match = MatchStorage.FromMatch(match);
         logger.LogInformation(
             "Starting match '{Name}' between players with experience {ExperiencePlayer1} and {ExperiencePlayer2}",
             this.GetPrimaryKeyString(),
@@ -70,28 +76,26 @@ public class MatchGrain : Grain, IMatchGrain
             throw new InvalidOperationException("Match has not started yet");
         }
 
-        return Task.FromResult(state.State.Match);
+        return Task.FromResult(match);
     }
 
 
     private async Task PlayerPlayedHandler(PlayerPlayResponse response, StreamSequenceToken token)
     {
-        state.State = state.State with
-        {
-            Match = state.State.Match!.WithNextPlayerPlayResult(response.BallWon)
-        };
+        match = match.WithNextPlayerPlayResult(response.BallWon);
 
         logger.LogInformation("Player {Player} {Result} the ball. Match score is {Score}",
             response.IsPlayerOne ? "1" : "2",
-            response.BallWon ? "won" : "lost", state.State.Match);
+            response.BallWon ? "won" : "lost",
+            match);
 
-        if (!state.State.Match.IsFinished)
+        if (!match.IsFinished)
         {
-            await SendPlayerPlayRequest(state.State.Match!.IsPlayerOnePlayNext);
+            await SendPlayerPlayRequest(match.IsPlayerOnePlayNext);
         }
         else
         {
-            logger.LogInformation("Match finished : {Match}", state.State.Match);
+            logger.LogInformation("Match finished : {Match}", match);
             var matchRegisterGrain = GrainFactory.GetGrain<IMatchRegisterGrain>(0);
             await matchRegisterGrain.FinishMatch(this.GetPrimaryKeyString());
             var streamProvider = this.GetStreamProvider(Constants.QueueStreamName);
@@ -103,9 +107,11 @@ public class MatchGrain : Grain, IMatchGrain
             {
                 await handle.UnsubscribeAsync();
             }
+
             DeactivateOnIdle();
         }
 
+        state.State.Match = MatchStorage.FromMatch(match);
         await state.WriteStateAsync();
     }
 
