@@ -8,20 +8,21 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Content Include="..\.dockerignore">
-        <Link>.dockerignore</Link>
-      </Content>
+        <Content Include="..\.dockerignore">
+            <Link>.dockerignore</Link>
+        </Content>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.Orleans.Persistence.AzureStorage" Version="7.2.6" />
-      <PackageReference Include="Microsoft.Orleans.Runtime" Version="7.2.6" />
-      <PackageReference Include="Microsoft.Orleans.Sdk" Version="7.2.6" />
-      <PackageReference Include="Microsoft.Orleans.Streaming.AzureStorage" Version="7.2.6" />
+        <PackageReference Include="Microsoft.Orleans.Persistence.AzureStorage" Version="7.2.6"/>
+        <PackageReference Include="Microsoft.Orleans.Persistence.Memory" Version="7.2.6"/>
+        <PackageReference Include="Microsoft.Orleans.Runtime" Version="7.2.6"/>
+        <PackageReference Include="Microsoft.Orleans.Sdk" Version="7.2.6"/>
+        <PackageReference Include="Microsoft.Orleans.Streaming.AzureStorage" Version="7.2.6"/>       
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Tennis.Core\Tennis.Core.csproj" />
+        <ProjectReference Include="..\Tennis.Core\Tennis.Core.csproj"/>
     </ItemGroup>
 
 </Project>

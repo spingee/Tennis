@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tennis.Core.UnitTests", "Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tennis.Core", "Tennis.Core\Tennis.Core.csproj", "{8538C68E-9E63-4351-9C8A-ACDC880B82F4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tennis.App.Tests", "Tennis.App.Tests\Tennis.App.Tests.csproj", "{AF397FCD-CBE2-4859-8150-7A8E8EB8AA03}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,5 +33,9 @@ Global
 		{8538C68E-9E63-4351-9C8A-ACDC880B82F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8538C68E-9E63-4351-9C8A-ACDC880B82F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8538C68E-9E63-4351-9C8A-ACDC880B82F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF397FCD-CBE2-4859-8150-7A8E8EB8AA03}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF397FCD-CBE2-4859-8150-7A8E8EB8AA03}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF397FCD-CBE2-4859-8150-7A8E8EB8AA03}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF397FCD-CBE2-4859-8150-7A8E8EB8AA03}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

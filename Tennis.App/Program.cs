@@ -13,42 +13,57 @@ hostBuilder.Services.AddLogging(builder => builder.AddSystemdConsole(options =>
 }));
 
 
-var configuration = hostBuilder.Configuration;
-
 hostBuilder
     .Host
-    .UseOrleans(builder =>
+    .UseOrleans((host, builder) =>
     {
-        var tableConnString = configuration.GetValue<string>("Orleans:AzureTableStorage:ConnectionString")!;
-        var queueConnString = configuration.GetValue<string>("Orleans:AzureQueue:ConnectionString")!;
-        builder.AddAzureTableGrainStorageAsDefault(options =>
-        {
-            options.TableName = "GrainState";
-            options.ConfigureTableServiceClient(tableConnString);
-        });
-        builder.AddAzureQueueStreams(Constants.QueueStreamName,
-                   configurator =>
-                   {
-                       configurator.ConfigureAzureQueue(
-                           ob => ob.Configure(options =>
-                           {
-                               options.ConfigureQueueServiceClient(queueConnString);
-                               options.QueueNames = new List<string>
-                                   { "yourprefix-azurequeueprovider-0" };
-                           }));
-                       configurator.ConfigureCacheSize(1024);
-                       configurator.ConfigurePullingAgent(ob => ob.Configure(options =>
-                       {
-                           options.GetQueueMsgsTimerPeriod = TimeSpan.FromMilliseconds(200);
-                       }));
-                   })
-               .AddAzureTableGrainStorage("PubSubStore",
-                   options =>
-                   {
-                       options.ConfigureTableServiceClient(tableConnString);
-                       options.TableName = "PubSubStore";
-                   });
+        var configuration = host.Configuration;
+        var inMemory = configuration.GetValue<bool>("Orleans:InMemory", false);
+
         builder.UseLocalhostClustering();
+        if (!inMemory)
+        {
+            var tableConnString = configuration.GetValue<string>("Orleans:AzureTableStorage:ConnectionString")!;
+            var queueConnString = configuration.GetValue<string>("Orleans:AzureQueue:ConnectionString")!;
+            builder.AddAzureTableGrainStorageAsDefault(options =>
+            {
+                options.TableName = "GrainState";
+                options.ConfigureTableServiceClient(tableConnString);
+            });
+            builder.AddAzureQueueStreams(Constants.QueueStreamName,
+                       configurator =>
+                       {
+                           configurator.ConfigureAzureQueue(
+                               ob => ob.Configure(options =>
+                               {
+                                   options.ConfigureQueueServiceClient(queueConnString);
+                                   options.QueueNames = new List<string>
+                                       { "yourprefix-azurequeueprovider-0" };
+                               }));
+                           configurator.ConfigureCacheSize(1024);
+                           configurator.ConfigurePullingAgent(ob => ob.Configure(options =>
+                           {
+                               options.GetQueueMsgsTimerPeriod = TimeSpan.FromMilliseconds(50);
+                           }));
+                       })
+                   .AddAzureTableGrainStorage("PubSubStore",
+                       options =>
+                       {
+                           options.ConfigureTableServiceClient(tableConnString);
+                           options.TableName = "PubSubStore";
+                       });
+
+        }
+        else
+        {
+            builder.AddMemoryGrainStorageAsDefault();
+            builder.AddMemoryGrainStorage("PubSubStore");
+            builder.AddMemoryStreams(Constants.QueueStreamName, configurator => configurator.ConfigurePullingAgent(ob => ob.Configure(options =>
+            {
+                options.GetQueueMsgsTimerPeriod = TimeSpan.FromMilliseconds(1);
+            })));
+        }
+
     });
 
 
@@ -58,10 +73,10 @@ app.MapGet("/match/{name}", async (string name, IGrainFactory factory) =>
 {
     var matchGrain = factory.GetGrain<IMatchGrain>(name);
     var result = await matchGrain.GetResult();
-    return new MatchResult(result.IsFinished, result.ToString());
+    return new MatchResult(result.IsFinished, result.Sets.Select(SetScore.FromSet).ToList());
 });
 
-app.MapPut("/match/{name}", async (string name, [FromBody]StartMatchRequest request, IGrainFactory factory) =>
+app.MapPost("/match/{name}", async (string name, [FromBody]StartMatchRequest request, IGrainFactory factory) =>
 {
     await factory.GetGrain<IPlayerGrain>(name + "-Player1").Create(name, request.ExperiencePlayer1);
     await factory.GetGrain<IPlayerGrain>(name + "-Player2").Create(name, request.ExperiencePlayer2);
@@ -70,3 +85,8 @@ app.MapPut("/match/{name}", async (string name, [FromBody]StartMatchRequest requ
 });
 
 app.Run();
+
+
+
+//needed for tests
+public partial class Program { }

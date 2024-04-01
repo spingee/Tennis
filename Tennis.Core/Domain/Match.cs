@@ -18,7 +18,7 @@ public record Match(string Name)
     {
         if (IsFinished)
             throw new InvalidOperationException("Match is already finished");
-        var setResult = Sets.First(f => !f.IsFinished);
+        var setResult = Sets.FirstOrDefault(f => !f.IsFinished, new Set());
         var newResult = setResult.WithNextPlayerPlayResult(isWon);
         var immutableList = Sets.Remove(setResult);
         if (newResult.IsFinished)
