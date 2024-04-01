@@ -341,3 +341,4 @@ healthchecksdb
 appsettings.dev.json
 
 main.parameters.dev.json
+.idea/.idea.Tennis/Docker/docker-compose.generated.override.yml

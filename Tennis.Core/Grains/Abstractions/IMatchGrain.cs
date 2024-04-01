@@ -17,5 +17,3 @@ public record StartMatchRequest(int ExperiencePlayer1, int ExperiencePlayer2);
 public record PlayerPlayResponse(bool BallWon, bool IsPlayerOne);
 
 public record MatchState(StartMatchRequest? Request, Match? Match);
-
-public record PlayerState(string MatchName, int Experience, ImmutableList<bool> LastPointResults);
