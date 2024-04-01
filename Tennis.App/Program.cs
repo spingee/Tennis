@@ -12,6 +12,9 @@ hostBuilder.Services.AddLogging(builder => builder.AddSystemdConsole(options =>
     options.TimestampFormat = $"{CultureInfo.InvariantCulture.DateTimeFormat.UniversalSortableDateTimePattern}: ";
 }));
 
+hostBuilder.Services.AddEndpointsApiExplorer();
+hostBuilder.Services.AddSwaggerGen();
+
 
 hostBuilder
     .Host
@@ -68,12 +71,21 @@ hostBuilder
 
 
 var app = hostBuilder.Build();
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.MapGet("/match/{name}", async (string name, IGrainFactory factory) =>
 {
     var matchGrain = factory.GetGrain<IMatchGrain>(name);
     var result = await matchGrain.GetResult();
     return new MatchResult(result.IsFinished, result.Sets.Select(SetScore.FromSet).ToList());
+})
+.WithOpenApi(operation =>
+{
+    operation.OperationId = "GetMatch";
+    operation.Summary = "Get the match result";
+    operation.Description = "Get the match result for the given match name";
+    return operation;
 });
 
 app.MapPost("/match/{name}", async (string name, [FromBody]StartMatchRequest request, IGrainFactory factory) =>
@@ -82,6 +94,13 @@ app.MapPost("/match/{name}", async (string name, [FromBody]StartMatchRequest req
     await factory.GetGrain<IPlayerGrain>(name + "-Player2").Create(name, request.ExperiencePlayer2);
     var matchGrain = factory.GetGrain<IMatchGrain>(name);
     await matchGrain.StartMatch(request);
+})
+.WithOpenApi(operation =>
+{
+    operation.OperationId = "StartMatch";
+    operation.Summary = "Start a new match";
+    operation.Description = "Start a new match with the given players experience levels";
+    return operation;
 });
 
 app.Run();
